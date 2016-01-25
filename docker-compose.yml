@@ -1,0 +1,69 @@
+zookeeper:
+  image: wurstmeister/zookeeper
+  ports: 
+    - "2181:2181"
+zookeeper_ui:
+  image: goodguide/zk-web
+  ports: 
+    - "80:8080"
+  links: 
+    - zookeeper:zookeeper
+
+kafka_data:
+  build: ./kafka
+  entrypoint: /bin/echo
+  command: Kafka data container!
+  volumes:
+    - /kafka:/kafka
+
+kafka_1:
+  build: ./kafka
+  ports:
+    - "9092"
+  links: 
+    - zookeeper:zk
+  environment:
+     KAFKA_BROKER_ID: 1
+     KAFKA_ADVERTISED_PORT: "9092"
+  volumes_from:
+    - kafka_data
+kafka_2:
+  build: ./kafka
+  ports:
+    - "9092"
+  links: 
+    - zookeeper:zk
+  environment:
+     KAFKA_BROKER_ID: 2
+     KAFKA_ADVERTISED_PORT: "9092"
+  volumes_from:
+    - kafka_data
+kafka_3:
+  build: ./kafka
+  ports:
+    - "9092"
+  links: 
+    - zookeeper:zk
+  environment:
+     KAFKA_BROKER_ID: 3
+     KAFKA_ADVERTISED_PORT: "9092"
+  volumes_from:
+    - kafka_data
+
+producer:
+  build: ./app
+  command: producer
+  links: 
+    - kafka_1:kafka
+  volumes:
+    - ./app:/app
+
+consumer:
+  build: ./app
+  command: consumer
+  environment:
+    CONSUMER_GROUP: "group_1"
+  links: 
+    - kafka_1:kafka
+  volumes:
+    - ~/app:/app
